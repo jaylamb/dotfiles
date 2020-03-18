@@ -25,6 +25,14 @@ function main()
 	script_name=$( basename "$script_dir" ); readonly script_name
 	hooks_dir=$( dirname "$script_dir" ); readonly hooks_dir
 	repository_dir=$( readlink -f "$hooks_dir/../.." ); readonly repository_dir
+
+	#Ensure the repository has at least one commit
+	if git rev-parse --verify HEAD >/dev/null 2>&1
+	then
+		against=HEAD
+	else
+		against=$( git hash-object -t tree < /dev/null )
+	fi
 }
 
-main "$@"
+main "$@" 
