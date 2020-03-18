@@ -21,7 +21,12 @@
 
 function message()
 {
-	echo $script_name: $1
+	echo -n "$script_name: $1"
+}
+
+function error()
+{
+	>&2 echo "$script_name: $1"
 }
 
 function abort()
@@ -35,7 +40,16 @@ function abort()
 
 function whitespace_error_check()
 {
-	exec git -C $repository_dir diff-index --check --cached $against --
+	message "Checking for whitespace errors... "
+
+	if ! git -C "$repository_dir" diff-index --check --cached $against -- >/dev/null 2>&1; then
+		echo "FAIL"
+		error "Aborting commit due to whitespace error(s). See below."
+		git -C "$repository_dir" diff-index --check --cached $against --
+		abort
+	fi
+
+		echo "PASS"
 }
 
 function main()
