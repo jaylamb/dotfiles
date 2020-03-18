@@ -19,6 +19,11 @@
 #File: git/hooks/pre-commit
 #Description: Pre-commit hook
 
+function whitespace_error_check()
+{
+	exec git -C $repository_dir diff-index --check --cached $against --
+}
+
 function main()
 {
 	script_dir=$( readlink -f "$0" ); readonly script_dir
@@ -33,6 +38,8 @@ function main()
 	else
 		against=$( git hash-object -t tree < /dev/null )
 	fi
+
+	whitespace_error_check
 }
 
 main "$@" 
