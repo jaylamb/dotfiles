@@ -32,10 +32,25 @@ function error()
 function abort()
 {
 	if [[ "$#" -gt 0 ]]; then
-		message "$1, aborting"
+		error "$1, aborting"
 	fi
 
 	exit 1
+}
+
+function display_help_text()
+{
+	echo "NAME"
+	echo "	$script_name - Execute this repository's Git pre-commit hook."
+	echo "SYNOPSIS"
+	echo "	$script_name --help"
+	echo "	$script_name"
+	echo "OPTIONS"
+	echo "	--help"
+	echo "		Display this help text."
+	echo "EXAMPLES"
+	echo "	$script_name --help"
+	echo "	$script_name"
 }
 
 function whitespace_error_check()
@@ -58,7 +73,7 @@ function script_error_check()
 
 	mapfile -t scripts < <( find "$repository_dir" -executable -type f | sed '/sample/d' )
 
-	if ! shellcheck -C always -s bash "${scripts[@]}" >/dev/null 2>&1; then
+	if ! shellcheck --color=always --shell=bash "${scripts[@]}" >/dev/null 2>&1; then
 		echo "fail"
 		error "Aborting commit due to script error(s). See below."
 		shellcheck -C always -s bash "${scripts[@]}"
@@ -74,6 +89,26 @@ function main()
 	script_name=$( basename "$script_dir" ); readonly script_name
 	hooks_dir=$( dirname "$script_dir" ); readonly hooks_dir
 	repository_dir=$( readlink -f "$hooks_dir/../.." ); readonly repository_dir
+
+	while [[ "$#" -gt 0 ]]; do
+		local argument="$1"
+		shift
+
+		case "$argument" in
+			--help)
+				display_help_text
+				exit
+				;;
+			--*)
+				;&
+			-*)
+				abort "'$argument' is not a supported option"
+				;;
+			*)
+				abort "'$argument' is not a valid argument"
+				;;
+		esac
+	done
 
 	#Ensure the repository has at least one commit
 	if git rev-parse --verify HEAD >/dev/null 2>&1
