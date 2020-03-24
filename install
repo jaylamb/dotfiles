@@ -42,7 +42,6 @@ function display_help_text()
 	echo "	$script_name --version"
 	echo "	$script_name --all"
 	echo "	$script_name [<dotfile_names>]"
-	echo "	$script_name"
 	echo "OPTIONS"
 	echo "	--all"
 	echo "		Install all dotfiles."
@@ -50,48 +49,62 @@ function display_help_text()
 	echo "		Display this help text."
 	echo "	--version"
 	echo "		Display the version number of this script."
-	echo "	--[<dotfiles>]"
+	echo "	[<dotfiles>]"
 	echo "		 A list of dotfiles to install."
+	echo ""
+	echo "		 Available dotfiles:"
+	printf "\\t\\t\\t%s\\n" "${all_dotfiles[@]}"
 	echo "EXAMPLES"
 	echo "	$script_name --help"
 	echo "	$script_name --version"
-	echo "  $script_name --all"
-	echo "  $script_name [<dotfile_name(s)>]"
+	echo "	$script_name --all"
+	echo "	$script_name [<dotfile_name(s)>]"
 }
 
 function display_version()
 {
-	echo "$script_name - version $(git -C "$repository_dir" describe --all --dirty --broken)"
+	echo "$script_name - version $( git -C "$repository_dir" describe --always --dirty --broken )"
 }
 
-function install_dotfiles()
+function validate_dotfile()
+{
+	if [[ "$#" -gt 0 ]]; then
+		local dotfile="$1"
+
+		echo "Validating: '$dotfile'"
+	else
+		abort "'$0' - No dotfile provided"
+	fi
+}
+
+function validate_dotfiles()
 {
 	while [[ "$#" -gt 0 ]]; do
-		local hook="$1"
+		local dotfile="$1"
 		shift
 
-		rm -f "$repository_dir/.git/hooks/$hook"
-
-		if ! ln -s "$hooks_dir/$hook" "$repository_dir/.git/hooks/$hook"; then
-			abort "'$hook' installation failed"
-		fi
+		validate_dotfile "$dotfile"
 	done
+
+	echo "All done."
 }
 
 function main()
 {
 	script_dir=$( readlink -f "$0" ); readonly script_dir
 	script_name=$( basename "$script_dir" ); readonly script_name
-	hooks_dir=$( dirname "$script_dir" ); readonly hooks_dir
-	repository_dir=$( readlink -f "$hooks_dir/../.." ); readonly repository_dir
+	repository_dir=$( dirname "$script_dir" ); readonly repository_dir
 
-	#mapfile -t hooks < <( find "$repository_dir" -type f | sed '/README/d; /LICENSE/d; /install/d; /.git\//d; /*git\/hooks/d; /.fonts*/d' )
+	mapfile -t all_dotfiles < <( find "$repository_dir" -type f | sed '/README/d; /LICENSE/d; /install/d; /.git\//d; /*git\/hooks/d;' | cut -d'/' -f6- | sort -g )
 
 	while [[ "$#" -gt 0 ]]; do
 		local argument="$1"
 		shift
 
 		case "$argument" in
+			--all)
+				dotfiles=( "${all_dotfiles[@]}" )
+				;;
 			--help)
 				display_help_text
 				exit
@@ -106,12 +119,12 @@ function main()
 				abort "'$argument' is not a supported option"
 				;;
 			*)
-				abort "'$argument' is not a valid argument"
+				dotfiles+=( "$argument" )
 				;;
 		esac
 	done
 
-	#install_dotfiles "${dotfiles[@]}"
+	validate_dotfiles "${dotfiles[@]}"
 }
 
 main "$@"
