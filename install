@@ -70,11 +70,17 @@ function validate_dotfile()
 {
 	if [[ "$#" -gt 0 ]]; then
 		local dotfile="$1"
-
-		echo "Validating: '$dotfile'"
 	else
 		abort "'$0' - No dotfile provided"
 	fi
+
+	for file in "${all_dotfiles[@]}"; do
+		if [[ "$dotfile" == "$file" ]]; then
+			return 0
+		fi
+	done
+
+	return 1
 }
 
 function validate_dotfiles()
@@ -83,10 +89,10 @@ function validate_dotfiles()
 		local dotfile="$1"
 		shift
 
-		validate_dotfile "$dotfile"
+		if ! validate_dotfile "$dotfile"; then
+			abort "'$dotfile' is not a supported dotfile"
+		fi
 	done
-
-	echo "All done."
 }
 
 function main()
