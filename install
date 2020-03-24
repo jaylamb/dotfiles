@@ -95,6 +95,16 @@ function validate_dotfiles()
 	done
 }
 
+function install_dotfiles()
+{
+	while [[ "$#" -gt 0 ]]; do
+		local dotfile="$1"
+		shift
+
+		#Install file
+	done
+}
+
 function main()
 {
 	script_dir=$( readlink -f "$0" ); readonly script_dir
@@ -131,6 +141,7 @@ function main()
 	done
 
 	validate_dotfiles "${dotfiles[@]}"
+	install_dotfiles "${dotfiles[@]}"
 }
 
 main "$@"
