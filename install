@@ -101,7 +101,34 @@ function install_dotfiles()
 		local dotfile="$1"
 		shift
 
-		#Install file
+		local -r dotfile_path="$HOME/$dotfile"
+
+		if [[ -h "$dotfile_path" ]]; then
+			rm "$dotfile_path"
+		fi
+
+		if [[ -e "$dotfile_path" ]]; then
+			local archive_dir="$HOME/dotfiles_archive"
+			local archived_dotfile="$archive_dir/$dotfile"
+
+			if [[ ! -d "$archive_dir" ]]; then
+				if ! mkdir "dotfiles_archive"; then
+					abort "failed to create dotfiles_archive directory"
+				fi
+			fi
+
+			if [[ -e "$archived_dotfile" ]]; then
+				abort "archived dotfile '$dotfile' already exists"
+			fi
+
+			if ! mv "$dotfile" "$archived_dotfile"; then
+				abort "failed to create archive file for $dotfile"
+			fi
+
+			if ! ln -s "$repository_dir/$dotfile" "$dotfile"; then
+				abort "failed to install dotfile '$dotfile'"
+			fi
+		fi
 	done
 }
 
