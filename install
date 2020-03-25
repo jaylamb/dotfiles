@@ -101,7 +101,7 @@ function install_dotfiles()
 		local dotfile="$1"
 		shift
 
-		local -r dotfile_path="$HOME/$dotfile"
+		local dotfile_path="$HOME/$dotfile"
 
 		if [[ -h "$dotfile_path" ]]; then
 			rm "$dotfile_path"
@@ -112,7 +112,7 @@ function install_dotfiles()
 			local archived_dotfile="$archive_dir/$dotfile"
 
 			if [[ ! -d "$archive_dir" ]]; then
-				if ! mkdir "dotfiles_archive"; then
+				if ! mkdir "../dotfiles_archive"; then
 					abort "failed to create dotfiles_archive directory"
 				fi
 			fi
@@ -124,10 +124,10 @@ function install_dotfiles()
 			if ! mv "$dotfile_path" "$archived_dotfile"; then
 				abort "failed to create archive file for $dotfile"
 			fi
+		fi
 
-			if ! ln -s "$repository_dir/$dotfile" "$dotfile"; then
-				abort "failed to install dotfile '$dotfile'"
-			fi
+		if ! ln -s "$repository_dir/$dotfile" "$dotfile_path"; then
+			abort "failed to install dotfile '$dotfile'"
 		fi
 	done
 }
@@ -138,7 +138,7 @@ function main()
 	script_name=$( basename "$script_dir" ); readonly script_name
 	repository_dir=$( dirname "$script_dir" ); readonly repository_dir
 
-	mapfile -t all_dotfiles < <( find "$repository_dir" -type f | sed '/README/d; /LICENSE/d; /install/d; /.git\//d; /*git\/hooks/d;' | cut -d'/' -f6- | sort -g )
+	mapfile -t all_dotfiles < <( find "$repository_dir" -type f | sed '/README/d; /LICENSE/d; /install/d; /.git\//d; /*git\/hooks/d;' | cut -d'/' -f5- | sort -g )
 
 	while [[ "$#" -gt 0 ]]; do
 		local argument="$1"
@@ -167,7 +167,17 @@ function main()
 		esac
 	done
 
+	echo "Create pictures directory"
+	if [[ ! -d "../pictures" ]];then
+		if ! mkdir "../pictures"; then
+			abort "failed to create pictures directory"
+		fi
+	fi
+
+	echo "Validate"
 	validate_dotfiles "${dotfiles[@]}"
+
+	echo "Install"
 	install_dotfiles "${dotfiles[@]}"
 }
 
