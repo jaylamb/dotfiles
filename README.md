@@ -22,11 +22,10 @@ To install the dotfiles:
 ```bash
 ./install --all
 ```
-	* To install a subset of files, run:
+	* To install a subset of files, or for additional options run:
 ```bash
 ./install --help
 ```
-for additional options.
 4. Restart i3 
 
 ## Contributing
