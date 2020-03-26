@@ -22,3 +22,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG file.
 
 [Unreleased]: https://github.com/jaylamb/dotfiles.git
+[v0.1]: https://github.com/jaylamb/dotfiles/pull/5
