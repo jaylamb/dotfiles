@@ -1,0 +1,2 @@
+#!/bin/sh
+feh  --image-bg black --bg-center "$HOME/pictures/hex_red.jpg"

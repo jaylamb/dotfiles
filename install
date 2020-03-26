@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+
+# dotfiles
+
+#  Copyright 2020 Jay Lamb, jaylamb@gmail.com
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+#File: install
+#Description: dotfiles install script
+
+function error()
+{
+	>&2 echo "$script_name: $1"
+}
+
+function abort()
+{
+	if [[ "$#" -gt 0 ]]; then
+		error "$1, aborting"
+	fi
+
+	exit 1
+}
+
+function display_help_text()
+{
+	echo "NAME"
+	echo "	$script_name - Install dotfiles."
+	echo "SYNOPSIS"
+	echo "	$script_name --help"
+	echo "	$script_name --version"
+	echo "	$script_name --all"
+	echo "	$script_name [<dotfile_names>]"
+	echo "OPTIONS"
+	echo "	--all"
+	echo "		Install all dotfiles."
+	echo "	--help"
+	echo "		Display this help text."
+	echo "	--version"
+	echo "		Display the version number of this script."
+	echo "	[<dotfiles>]"
+	echo "		 A list of dotfiles to install."
+	echo ""
+	echo "		 Available dotfiles:"
+	printf "\\t\\t\\t%s\\n" "${all_dotfiles[@]}"
+	echo "EXAMPLES"
+	echo "	$script_name --help"
+	echo "	$script_name --version"
+	echo "	$script_name --all"
+	echo "	$script_name [<dotfile_name(s)>]"
+}
+
+function display_version()
+{
+	echo "$script_name - version $( git -C "$repository_dir" describe --always --dirty --broken )"
+}
+
+function validate_dotfile()
+{
+	if [[ "$#" -gt 0 ]]; then
+		local dotfile="$1"
+	else
+		abort "'$0' - No dotfile provided"
+	fi
+
+	for file in "${all_dotfiles[@]}"; do
+		if [[ "$dotfile" == "$file" ]]; then
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+function validate_dotfiles()
+{
+	while [[ "$#" -gt 0 ]]; do
+		local dotfile="$1"
+		shift
+
+		if ! validate_dotfile "$dotfile"; then
+			abort "'$dotfile' is not a supported dotfile"
+		fi
+	done
+}
+
+function install_dotfiles()
+{
+	while [[ "$#" -gt 0 ]]; do
+		local dotfile="$1"
+		shift
+
+		local dotfile_path="$HOME/$dotfile"
+
+		if [[ -h "$dotfile_path" ]]; then
+			rm "$dotfile_path"
+		fi
+
+		if [[ -e "$dotfile_path" ]]; then
+			local archive_dir="$HOME/dotfiles_archive"
+			local archived_dotfile="$archive_dir/$dotfile"
+
+			if [[ ! -d "$archive_dir" ]]; then
+				if ! mkdir "../dotfiles_archive"; then
+					abort "failed to create dotfiles_archive directory"
+				fi
+			fi
+
+			if [[ -e "$archived_dotfile" ]]; then
+				abort "archived dotfile '$dotfile' already exists"
+			fi
+
+			if ! mv "$dotfile_path" "$archived_dotfile"; then
+				abort "failed to create archive file for $dotfile"
+			fi
+		fi
+
+		if ! ln -s "$repository_dir/$dotfile" "$dotfile_path"; then
+			abort "failed to install dotfile '$dotfile'"
+		fi
+	done
+}
+
+function main()
+{
+	script_dir=$( readlink -f "$0" ); readonly script_dir
+	script_name=$( basename "$script_dir" ); readonly script_name
+	repository_dir=$( dirname "$script_dir" ); readonly repository_dir
+
+	mapfile -t all_dotfiles < <( find "$repository_dir" -type f | sed '/README/d; /LICENSE/d; /install/d; /.git\//d; /*git\/hooks/d;' | cut -d'/' -f5- | sort -g )
+
+	while [[ "$#" -gt 0 ]]; do
+		local argument="$1"
+		shift
+
+		case "$argument" in
+			--all)
+				dotfiles=( "${all_dotfiles[@]}" )
+				;;
+			--help)
+				display_help_text
+				exit
+				;;
+			--version)
+				display_version
+				exit
+				;;
+			--*)
+				;&
+			-*)
+				abort "'$argument' is not a supported option"
+				;;
+			*)
+				dotfiles+=( "$argument" )
+				;;
+		esac
+	done
+
+	if [[ ! -d "../pictures" ]];then
+		if ! mkdir "../pictures"; then
+			abort "failed to create pictures directory"
+		fi
+	fi
+
+	validate_dotfiles "${dotfiles[@]}"
+	install_dotfiles "${dotfiles[@]}"
+}
+
+main "$@"
