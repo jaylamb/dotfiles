@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	- compton.conf
 	- pictures (directory)
 - Dotfiles installation script
-- Git Hooks installation script
+- Git hooks installation script
 - Git pre-commit hook
 - Project licence (Apache version 2.0)
 - This CHANGELOG file.
