@@ -167,17 +167,13 @@ function main()
 		esac
 	done
 
-	echo "Create pictures directory"
 	if [[ ! -d "../pictures" ]];then
 		if ! mkdir "../pictures"; then
 			abort "failed to create pictures directory"
 		fi
 	fi
 
-	echo "Validate"
 	validate_dotfiles "${dotfiles[@]}"
-
-	echo "Install"
 	install_dotfiles "${dotfiles[@]}"
 }
 
