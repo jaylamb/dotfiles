@@ -167,7 +167,7 @@ function main()
 		esac
 	done
 
-	if [[ ! -d "../pictures" ]];then
+	if [[ ! -d "../pictures" ]]; then
 		if ! mkdir "../pictures"; then
 			abort "failed to create pictures directory"
 		fi
